@@ -1,98 +1,149 @@
-# Date :  28.1.2019
+import copy
 
-import random as r
-ai,player='O','X'
-board=[['_','_','_'],['_','_','_'],['_','_','_']]
-weights=[[3,2,3],[2,4,2],[3,2,3]]
-def init():
-    global ai,player,board,weights
-    ai,player='O','X'
-    board=[['_','_','_'],['_','_','_'],['_','_','_']]
-    weights=[[3,2,3],[2,4,2],[3,2,3]]    
-def move(row,col,ch):
-    if board[row][col]=='_':
-        board[row][col],weights[row][col]=ch,0
-        return True
-    else : return False
+class XO:
+    def opp_sign(self, sign):
+        return 'O' if sign == 'X' else 'X' 
 
-def display(move_type='board'):
-    if move_type=='cpu' : print('*'*5+'CPU MOVE'+'*'*5)
-    elif move_type=='board': print("*"*5+'  Board of Tic Tac Toe '+'*'*5)    
-    else :print('*'*5+'PLAYER MOVE'+'*'*5)
-    for i in range(3):
-        for j in range(3):
-             print(board[i][j],end='\t')
-        print('\n')
-    print('\n')    
+class Board:
+    def __init__(self, size):
+        self.s = size
+        self.q = size*size
+        self.empty = [i for i in range(self.q)]
+        self.grid = ['.'] * self.q
+    def ins(self, move, sign):
+        self.grid[move] = sign
+        self.empty = [i for i in self.empty if i != move]
+    def is_full(self):
+        return not len(self.empty)
+    def get_col(self, col):
+        return [self.grid[i] for i in range(col-1, self.q, self.s)] 
+    def get_row(self, row):
+        return self.grid[(row-1)*self.s:row*self.s] 
+    def get_diag1(self):
+        return [self.grid[i] for i in range(0, self.q, self.s+1)] 
+    def get_diag2(self):
+        return [self.grid[i] for i in range(self.s-1, self.q, self.s-1)][:-1] 
+    def __str__(self):
+        return '\n'.join([' '.join(map(str,self.grid[i:i+self.s])) 
+                for i in range(0, self.q, self.s)]) + '\n'
     
-def compare_line(s1,ch):
-    return '_' in s1 and s1.count(ch)==2    
-     
-def get_position():
-    max_value=max([max(x) for x in weights])
-    positions=[(i,weights[i].index(max_value)) for i in range(3)  if max_value in weights[i]]
-    return positions
+class Tree:
+    def find_best_move(self,board,depth,sign):
+        """
+    
+        :param board:
+        :return:
+        """
+        if (board.empty==[]): return None
+    
+        best_move=-(2**(board.s**2))
+        m=board.empty[0]
+        for move in board.empty:
+            b=copy.deepcopy(board)
+            b.ins(move,sign)
+            if (self.is_win(b,sign) or self.is_win(b,xo.opp_sign(sign))):
+                return move
+            curr_move=self.minimax(b,depth,False,xo.opp_sign(sign))
+            if (curr_move > best_move):
+                best_move = curr_move
+                m=move
+            #print(curr_move,best_move,m)
+        return m #This should be the right move to do....
+    
+    
+    # *****************************************************************************************************#
+    
+    def minimax(self,board,depth,myTurn,sign):
+        """
+        :param depth:
+        :param myTurn:
+        :return:
+        """
+        #print(depth,end='\n')
+        if (self.is_win(board,xo.opp_sign(sign))):
+            if myTurn: 
+                return -(board.s**2+1) + depth
+            else:
+                return (board.s**2+1) - depth
+                
+        elif (board.is_full()):
+            return 0
+    
+        if (myTurn):
+            bestVal=-(2**700)
+            for move in board.empty: #empty - the empty squares at the board 
+                b = copy.deepcopy(board)
+                b.ins(move, sign)
+                value=self.minimax(b,depth+1,not myTurn, xo.opp_sign(sign))
+                #xo.opp_sign(sign) - if function for the opposite sign: x=>o and o=>x
+                bestVal = max([bestVal,value])
+    
+        else:
+            bestVal = (2**700)
+            for move in board.empty:
+                b = copy.deepcopy(board)
+                b.ins(move, sign) ## error xo.opp_sign(sign))
+                value = self.minimax(b, depth + 1, not myTurn, xo.opp_sign(sign))
+                #print("opp val: ",value)
+                bestVal = min([bestVal, value])
 
-def has_tied():
-    for row in board:
-       if '_' in row: return False
-    return True
+        #print(depth, ' minimax returns ', bestVal, sign, myTurn, 'for:')
+        #print(board)
+        return bestVal
 
-def attacking_positiion(ch):
-        default='_'
-        for i in range(3):
-            col=[board[0][i],board[1][i],board[2][i]]
-            if compare_line(board[i],ch): return (i,board[i].index(default))
-            elif compare_line(col,ch): return (col.index(default),i)  
-        diag1,diag2=[board[0][0],board[1][1],board[2][2]],[board[0][2],board[1][1],board[2][0]] 
-        if compare_line(diag1,ch):return (diag1.index(default),diag1.index(default))
-        elif compare_line(diag2,ch): return (diag2.index(default),2-diag2.index(default))
-        return False      
+    
+    # *****************************************************************************************************#
+    def is_win(self,board, sign):
+        """
+        The function gets a board and a sign.
+        :param board: The board.
+        :param sign: The sign (There are only two options: x/o).
+        :return: True if sign "wins" the board, i.e. some row or col or diag are all with then sing. Else return False.
+        """
+    
+        temp=board.s
+        wins = []  # The options to win at the game.
+        for i in range(1, temp + 1):
+            wins.append(board.get_col(i))
+            wins.append(board.get_row(i))
+        wins.append(board.get_diag1())
+        wins.append(board.get_diag2())
+    
+        for i in wins:
+            if (self.is_same(i, sign)):
+                return True
+        return False
+    
+    
+    
+    # *****************************************************************************************************#
+    def is_same(self, l, sign):
+        """
+        The function get a list l and returns if ALL the list have the same sign.
+        :param l: The list.
+        :param sign: The sign.
+        :return: True or false
+        """
+    
+        for i in l:
+            if (i != sign):
+                return False
+        return True
 
-def ai_move():
-    global ai,player
-    pos,f=attacking_positiion(ch=ai),False
-    if pos!=False:(row,col),f=pos,True
-    else :
-        pos=attacking_positiion(ch=player)
-        if pos!=False: row,col=pos
-        else: row,col=r.choice(get_position())
-    move(row,col,ai)
-    return f            
+# Main program        
+xo = XO()
+board = Board(3)
+tree = Tree()
+sign = 'O'
+human = False
+while not board.is_full() and not tree.is_win(board, sign):
+    sign = xo.opp_sign(sign)
+    human = not human
+    if human:
+        move = input('your move as {} (0-8):'.format(sign))
+    else:
+        print('calculating...')
+        move = tree.find_best_move(board, 0, sign)
+    board.ins(int(move), sign)
+    print (board)
 
-def run():
-    global ai,player
-    end,tied,move_type=False,False,None         
-    print('*'*10+ 'Tic Tac Toe'+'*'*10+'\n')
-    display()
-    ch=input('Choose a Character X or O : ')
-    if ch=='O': ai,player=player,ai
-    while(True):
-        if tied:
-            print('*'*10+'The match is tied'+'*'*10)
-            return 
-        elif end:
-            print('*'*10+move_type+' has own '+'*'*10) 
-            return       
-        move_type='player'
-        r=int(input("\nEnter next move's row (1 to 3): "))
-        c=int(input("Enter next move's column (1 to 3): "))
-        if not move(r-1,c-1,player):
-            print('\nEnter proper positions!!')
-        else:   
-          display(move_type=move_type)
-          tied=has_tied()          
-          if tied: continue
-          move_type='cpu'     
-          end=ai_move()                      
-          display(move_type=move_type)
-          tied=has_tied()            
-def main():    
-    run()
-    f='Y'
-    while(f=='Y'or f=='y'):
-        f=input('Do you want to play again Y or N: ')
-        init()
-        if f=='Y' or f=='y':run()
-    print('\n\n'+'*'*10+' Thank You '+'*'*10)    
-main() 
