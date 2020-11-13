@@ -30,9 +30,9 @@ def print_floor(floor, row, col): # row, col represent the current vacuum cleane
     print(floor)
     print("-----------------")
 
-# Test 2
-floor2 = [[1, 1, 0, 0, 1, 0, 0],
+# Test 1
+floor1 = [[1, 1, 0, 0, 1, 0, 0],
          [0, 0, 0, 1, 0, 0, 0],
          [0, 1, 1, 1, 1, 1, 1],
          [0, 1, 0, 1, 0, 1, 0]]
-clean(floor2)
+clean(floor1)
