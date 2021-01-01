@@ -106,3 +106,28 @@ def main():
     kb.display()
 
 main()
+
+
+Enter KB: (enter e to exit)
+missile(x)=>weapon(x)
+missile(M1)
+enemy(x,America)=>hostile(x)
+american(West)
+enemy(Nono,America)
+owns(Nono,M1)
+missile(x)&owns(Nono,x)=>sells(West,x,Nono)
+american(x)&weapon(y)&sells(x,y,z)&hostile(z)=>criminal(x)
+e
+Enter Query:
+criminal(x)
+Querying criminal(x):
+	1. criminal(West)
+All facts: 
+	1. american(West)
+	2. hostile(Nono)
+	3. missile(M1)
+	4. weapon(M1)
+	5. owns(Nono,M1)
+	6. sells(West,M1,Nono)
+	7. enemy(Nono,America)
+	8. criminal(West)
